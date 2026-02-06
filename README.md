@@ -1,4 +1,6 @@
 ★ MIDI ArduinoIDE PRO
+Easily convert MIDI files into Arduino code and play music using a passive buzzer.
+
 
 ## 🎥 Demo Video
 Arduino passive buzzer playing MIDI converted data.
@@ -113,5 +115,6 @@ MIT License
 ★★ ライセンス
 
 MIT License
+
 
 
