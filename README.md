@@ -16,7 +16,7 @@ Its main feature is the ability to perform rich --polyphonic music (chords & har
 - --Real-time Editor--
     Adjust playback speed, volume balance, and octave shift directly in the browser. It also features a visual trimming tool to select specific parts of the song.
 - --Advanced Tuning Systems--
-    Supports over 20 tuning systems beyond standard 12-TET, including Just Intonation, Pythagorean, Gamelan (Slendro/Pelog), and Microtonal scales.
+    Supports  20 tuning systems beyond standard 12-TET, including Just Intonation, Pythagorean, Gamelan (Slendro/Pelog), and Microtonal scales.
 - --High Performance--
     - --UNO R4:-- Uses direct register manipulation for high-speed software PWM.
     - --ESP32:-- Uses Hardware LEDC PWM for clear sound.
@@ -72,7 +72,7 @@ MIT License
 - --リアルタイム編集--
     再生速度、各パートの音量バランス、オクターブ変更をブラウザ上で調整できます。波形を見ながら再生範囲を指定できるトリミング機能も搭載しています。
 - --高度な音律対応--
-    平均律（12-TET）だけでなく、純正律、ピタゴラス音律、ガムラン（スレンドロ/ペロッグ）、微分音など20種類以上の音律プリセットに対応しています。
+    平均律（12-TET）だけでなく、純正律、ピタゴラス音律、ガムラン（スレンドロ/ペロッグ）、微分音など20種類の音律プリセットに対応しています。
 - --高性能なコード生成--
     - --UNO R4:-- レジスタ直接操作による高速ソフトウェアPWMを使用。
     - --ESP32:-- ハードウェアLEDC PWM機能を使用し、クリアな音質を実現。
@@ -108,3 +108,4 @@ MIT License
 ★★ ライセンス
 
 MIT License
+
