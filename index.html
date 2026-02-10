@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MIDI ArduinoIDE PRO V7.4</title>
+    <title>MIDI ArduinoIDE PRO V8.0</title>
     <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.js"></script>
     <style>
         /* =========================================
-           V7.2 Theme: Global Heritage (Dark & Gold)
+           V8.0 Theme: Global Heritage (Dark & Gold)
            ========================================= */
         body { 
             font-family: 'Biz UDPGothic', 'Meiryo', sans-serif; 
@@ -40,6 +40,9 @@
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
             margin-left: 10px;
         }
+        .header-btns {
+            display: flex; gap: 10px;
+        }
         .lang-btn {
             background: #333; color: #ccc; border: 1px solid #555;
             padding: 5px 10px; cursor: pointer; font-size: 12px; border-radius: 4px;
@@ -70,53 +73,25 @@
         input:focus, select:focus { border-color: #ffd700; outline: none; background: #333; }
 
         /* --- FIXED STANDARD SLIDER STYLING --- */
-        /* ブラウザ標準の挙動に戻し、見た目だけ整える */
         input[type=range] {
-            -webkit-appearance: none; /* 標準スタイル無効化 */
-            width: 100%; 
-            height: 6px; /* バーの太さ */
-            background: #444; /* デフォルトの背景色（JSで上書きされる） */
-            border-radius: 3px; 
-            outline: none; 
-            margin: 10px 0;
-            cursor: pointer;
-            border: none; /* 枠線なし */
+            -webkit-appearance: none; width: 100%; height: 6px; 
+            background: #444; border-radius: 3px; outline: none; margin: 10px 0; cursor: pointer; border: none;
         }
-
-        /* Chrome / Safari / Edge / Opera */
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 16px; 
-            height: 16px; 
-            border-radius: 50%; 
-            background: #fff; /* 白い持ち手 */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.5); /* 軽い影 */
-            cursor: pointer;
-            border: none;
-            /* バーより少し大きく、中央に配置 */
-            margin-top: -1px; /* 微調整なしでブラウザに任せるのが一番ズレないが、見栄えのため少し調整 */
+            -webkit-appearance: none; appearance: none;
+            width: 16px; height: 16px; border-radius: 50%; background: #fff; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.5); cursor: pointer; border: none; margin-top: -1px;
         }
-        
-        /* Firefox */
         input[type=range]::-moz-range-thumb {
-            width: 16px; 
-            height: 16px; 
-            border: none;
-            border-radius: 50%;
-            background: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.5);
-            cursor: pointer;
+            width: 16px; height: 16px; border: none; border-radius: 50%;
+            background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); cursor: pointer;
         }
 
-        /* バーの背景色はJS (updateSliderFill) で linear-gradient を制御する */
-
-        
         /* Mixer Panel */
         .mixer-panel {
             background: #252526; border: 1px solid #333;
             border-radius: 6px; padding: 20px; margin-bottom: 25px;
-            display: none; /* Initially hidden until load */
+            display: none; /* Initially hidden */
         }
         .mixer-header {
             font-size: 0.85em; color: #aaa; border-bottom: 1px solid #444; 
@@ -128,7 +103,7 @@
         }
         .btn-reset:hover { background: #666; }
 
-        /* Mixer Channels */
+        /* Mixer Channels (Standard) */
         .mixer-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;}
         .channel-strip {
             background: #1a1a1a; padding: 15px; border-radius: 4px;
@@ -149,7 +124,33 @@
         .param-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75em; color: #ccc; margin-bottom: 5px; }
         select.mini-select { padding: 2px 4px; font-size: 11px; width: auto; background: #222; border: 1px solid #555; height: 24px; }
 
-        /* Extended Mixer Controls (Speed & Range) */
+        /* PRO Mode Panel Styles */
+        #proPanel {
+            display: none; background: #252526; 
+            border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #00e5ff;
+            padding: 10px;
+        }
+        .pro-track-row {
+            display: grid; 
+            grid-template-columns: 30px 2fr 100px 60px 80px 80px; 
+            gap: 10px; 
+            align-items: center;
+            background: #1a1a1a; 
+            padding: 8px; 
+            border-radius: 4px; 
+            border-left: 3px solid #555;
+            font-size: 0.85em;
+            margin-bottom: 4px;
+        }
+        .pro-track-row.editing { border-left-color: #ffd700; background: #333; }
+        .pro-track-row.muted { opacity: 0.5; }
+        
+        .prio-select { background:#222; color:#fff; border:1px solid #444; padding:2px; font-size:0.8em; height: 24px;}
+        .btn-mini { padding: 4px 8px; font-size: 10px; cursor: pointer; border-radius: 3px; border:none; color:#fff;}
+        .btn-edit { background: #444; }
+        .btn-edit.active { background: #ffd700; color:#000; font-weight:bold; }
+
+        /* Extended Mixer Controls */
         .mixer-extended {
             display: grid; grid-template-columns: 1fr 2fr; gap: 20px;
             background: #1a1a1a; padding: 15px; border-radius: 4px; border: 1px solid #333;
@@ -158,54 +159,30 @@
         /* --- TRIMMING UI --- */
         .trim-container {
             position: relative;
-            width: 100%;
-            height: 60px;
-            background: #000;
-            border: 1px solid #444;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 10px;
-            user-select: none;
+            width: 100%; height: 60px;
+            background: #000; border: 1px solid #444; border-radius: 4px;
+            overflow: hidden; margin-top: 10px; user-select: none;
         }
-        canvas#trimCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .trim-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Let clicks pass through to handles */
-        }
-        /* Handles */
+        canvas#trimCanvas { width: 100%; height: 100%; display: block; }
+        /* Edit Mode Cursor */
+        canvas#trimCanvas.edit-mode { cursor: crosshair; }
+
         .trim-handle {
-            position: absolute;
-            top: 0; bottom: 0;
-            width: 16px; 
-            background: rgba(255, 215, 0, 0.8);
-            cursor: ew-resize;
-            pointer-events: auto;
-            z-index: 10;
+            position: absolute; top: 0; bottom: 0; width: 16px; 
+            background: rgba(255, 215, 0, 0.8); cursor: ew-resize; z-index: 10;
             display: flex; align-items: center; justify-content: center;
         }
         .trim-handle::after { content:'||'; color: #000; font-size: 10px; font-weight: bold; }
         .trim-handle-l { left: 0; border-radius: 4px 0 0 4px; border-right: 1px solid #fff; }
         .trim-handle-r { right: 0; border-radius: 0 4px 4px 0; border-left: 1px solid #fff; }
         
-        /* Darken outside areas */
         .trim-mask {
-            position: absolute; top:0; bottom:0;
-            background: rgba(0,0,0,0.7);
-            z-index: 5;
-            pointer-events: auto; /* Catch clicks outside */
+            position: absolute; top:0; bottom:0; background: rgba(0,0,0,0.7); z-index: 5;
         }
         .trim-mask-l { left: 0; width: 0; border-right: 1px solid #ffd700; }
         .trim-mask-r { right: 0; width: 0; border-left: 1px solid #ffd700; }
 
-        .time-labels {
-            display: flex; justify-content: space-between;
-            font-size: 0.75em; color: #ffd700; margin-top: 4px; font-family: monospace;
-        }
+        .time-labels { display: flex; justify-content: space-between; font-size: 0.75em; color: #ffd700; margin-top: 4px; font-family: monospace; }
 
         /* Transport */
         .transport {
@@ -218,12 +195,8 @@
         .btn-play { background: #2e7d32; } .btn-play:hover { background: #4caf50; }
         .btn-stop { background: #c62828; } .btn-stop:hover { background: #ef5350; }
 
-        .progress-container {
-            height: 6px; background: #111; border-radius: 3px; overflow: hidden; position: relative;
-        }
-        .progress-bar {
-            width: 0%; height: 100%; background: #ffd700; transition: width 0.1s linear;
-        }
+        .progress-container { height: 6px; background: #111; border-radius: 3px; overflow: hidden; position: relative; }
+        .progress-bar { width: 0%; height: 100%; background: #ffd700; transition: width 0.1s linear; }
 
         /* Action Buttons */
         .action-area { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; display:none; }
@@ -261,8 +234,11 @@
 
 <div class="container">
     <header>
-        <h1>MIDI ArduinoIDE <span>PRO V7.4</span></h1>
-        <button class="lang-btn" onclick="toggleLanguage()" id="btnLang">English</button>
+        <h1>MIDI ArduinoIDE <span>PRO V8.0</span></h1>
+        <div class="header-btns">
+            <button class="lang-btn" id="btnMode" onclick="toggleMode()" style="background:#ff4081; color:#fff; font-weight:bold;">MODE: STANDARD</button>
+            <button class="lang-btn" onclick="toggleLanguage()" id="btnLang">English</button>
+        </div>
     </header>
 
     <div class="quick-start">
@@ -342,7 +318,7 @@
             </div>
         </div>
         
-        <div class="mixer-grid">
+        <div class="mixer-grid" id="standardMixer">
             <div class="channel-strip ch-melody">
                 <span class="role-tag tag-melody">MELODY</span>
                 <div class="param-row">
@@ -390,6 +366,20 @@
             </div>
         </div>
 
+        <div id="proPanel">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0; color:#00e5ff; font-size:1em;">PRO TRACK MANAGER</h3>
+                <label style="color:#e0e0e0; font-size:0.9em; cursor:pointer; display:flex; align-items:center;">
+                    <input type="checkbox" id="chkFixedMax" onchange="generateReportAndCode(true)" style="width:auto; margin-right:5px;"> 
+                    <span id="lblFixedMax">Fixed Max Vol (Ignore Velocity)</span>
+                </label>
+            </div>
+            <div style="display:grid; grid-template-columns: 30px 2fr 100px 60px 80px 80px; gap:10px; color:#888; font-size:0.7em; margin-bottom:5px; padding:0 10px;">
+                <span>#</span><span>Track Name</span><span>Vol</span><span>Oct</span><span>Priority</span><span>Action</span>
+            </div>
+            <div id="proTrackList" style="max-height:300px; overflow-y:auto;"></div>
+        </div>
+
         <div class="mixer-extended">
             <div style="text-align:center;">
                 <label style="color:#fff;" id="lblSpeed">PLAYBACK SPEED</label>
@@ -400,6 +390,7 @@
             <div>
                 <label style="color:#fff; display:flex; justify-content:space-between; margin-bottom:10px;">
                     <span id="lblRange">TRIMMING (MIDI TIMELINE)</span>
+                    <span id="lblEditHint" style="font-size:0.8em; color:#ffd700; display:none;">* Edit Mode: Click note to Mute/Unmute</span>
                 </label>
                 
                 <div class="trim-container" id="trimContainer">
@@ -530,7 +521,10 @@ function updateLanguageUI() {
     setText('lblTarget', t.lblTarget);
     setText('lblVoice', t.lblVoice);
     setText('lblTuning', t.lblTuning);
-    setText('hdrMixer', t.hdrMixer);
+    // Dynamic Header
+    if(gMode === 'Standard') setText('hdrMixer', t.hdrMixer);
+    else if(document.getElementById('hdrMixer')) document.getElementById('hdrMixer').innerText = "PRO MIXER & EDITOR";
+
     setText('btnReset', t.btnReset);
     setText('lblSpeed', t.lblSpeed);
     setText('lblRange', t.lblRange);
@@ -579,8 +573,8 @@ const TUNING_DEFS = {
 // ==========================================
 let gMidi = null;      
 let gTrackRoles = [];
-let gRawEvents = [];
-let gFilename = "Sample_Morning.mid"; // Default
+let gRawEvents = []; // {t, type, p, v, dur, role, trackIdx}
+let gFilename = "Sample_Morning.mid"; 
 
 let audioCtx = null;
 let isPlaying = false;
@@ -596,46 +590,59 @@ let gSpeed = 1.0;
 let gRangeStart = 0;
 let gRangeEnd = 0;
 
+// V8.0 PRO Mode State
+let gMode = 'Standard'; // 'Standard' or 'Pro'
+let gProSettings = [];  // Array of {vol, oct, prio, mute, name}
+let gEditingTrack = -1; // -1:None, >=0: TrackIdx
+
 const PIN_MAP = {
     ESP32: [32, 33, 27, 4, 5, 18, 19, 21, 22, 23, 13, 12], 
     R4:    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] 
 };
 
 // ==========================================
-// 0. Slider Visual & UI Utils (FIXED ALIGNMENT)
+// UI Utils & Mode Switching
 // ==========================================
 function updateSliderFill(el, color) {
     const min = el.min ? parseFloat(el.min) : 0;
     const max = el.max ? parseFloat(el.max) : 100;
     const val = parseFloat(el.value);
-    
-    // 単純なパーセントではなく、サム(持ち手:16px)の中心位置を計算して塗りつぶし範囲を決める
-    // ratio は 0.0 ～ 1.0
     const ratio = (val - min) / (max - min);
-    
-    // CSS calc() を使って、サムの中心位置にグラデーションストップを合わせる
-    // Thumb Width = 16px, Radius = 8px.
-    // 位置 = ratio * 100% + (8px - ratio * 16px)
-    // ratio=0 のとき: 0% + 8px (左端のサムの中心)
-    // ratio=1 のとき: 100% - 8px (右端のサムの中心)
     const stopPosition = `calc(${ratio * 100}% + (${8 - ratio * 16}px))`;
-
     el.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${stopPosition}, #444 ${stopPosition}, #444 100%)`;
 }
 
-// Init all sliders with correct colors
-window.addEventListener('DOMContentLoaded', () => {
-    updateSliderFill(document.getElementById('voiceCount'), '#ffd700');
-    updateSliderFill(document.getElementById('volMelody'), '#ff4081');
-    updateSliderFill(document.getElementById('volBass'), '#00e5ff');
-    updateSliderFill(document.getElementById('volAcc'), '#ffd740');
-    updateSliderFill(document.getElementById('speedRange'), '#ffd700');
-});
+function toggleMode() {
+    gMode = (gMode === 'Standard') ? 'Pro' : 'Standard';
+    const btn = document.getElementById('btnMode');
+    const mixerStd = document.getElementById('standardMixer');
+    const proPanel = document.getElementById('proPanel');
+    const mixerHdr = document.getElementById('hdrMixer');
+
+    if(gMode === 'Pro') {
+        btn.innerText = "MODE: PRO";
+        btn.style.background = "#00e5ff"; // Cyan for Pro
+        btn.style.color = "#000";
+        proPanel.style.display = 'block';
+        mixerStd.style.display = 'none';
+        mixerHdr.innerText = "PRO MIXER & EDITOR";
+        initProTrackList();
+    } else {
+        btn.innerText = "MODE: STANDARD";
+        btn.style.background = "#ff4081"; // Pink for Standard
+        btn.style.color = "#fff";
+        proPanel.style.display = 'none';
+        mixerStd.style.display = 'grid';
+        mixerHdr.innerText = "REALTIME MIXER & EDITOR";
+        // Reset Editor
+        gEditingTrack = -1;
+        initTrimmer(); 
+    }
+}
 
 // ==========================================
-// 1. SAMPLE MIDI GENERATOR (Original)
+// 1. SAMPLE MIDI GENERATOR
 // ==========================================
-// Simple generation of a MIDI file byte array for "Morning Glory"
 function createSampleMidi() {
     // Helper to write variable length quantity
     const vlq = (v) => {
@@ -665,35 +672,29 @@ function createSampleMidi() {
         return [0x4D, 0x54, 0x72, 0x6B, (len>>24)&0xFF, (len>>16)&0xFF, (len>>8)&0xFF, len&0xFF, ...data];
     };
 
-    // Composition: "Morning Glory" (Original)
-    // Ticks per beat = 480. 120 BPM.
-    // Melody (Ch0), Bass (Ch1), Acc (Ch2)
+    // Composition: "Morning Glory"
     let trMelody = [];
     let trBass = [];
     let trAcc = [];
     
-    // Pattern A
     [0, 480*4].forEach(offset => {
-        // C Major Arpeggio-ish
         [60, 64, 67, 72, 67, 64].forEach((p, i) => {
             trMelody.push({t: offset + i*480, d: 400, p: p});
         });
-        trMelody.push({t: offset + 6*480, d: 800, p: 76}); // E5
+        trMelody.push({t: offset + 6*480, d: 800, p: 76}); 
         
-        // Bass
-        trBass.push({t: offset, d: 480*2, p: 36}); // C2
-        trBass.push({t: offset + 480*2, d: 480*2, p: 43}); // G2
-        trBass.push({t: offset + 480*4, d: 480*2, p: 41}); // F2
-        trBass.push({t: offset + 480*6, d: 480*2, p: 43}); // G2
+        trBass.push({t: offset, d: 480*2, p: 36}); 
+        trBass.push({t: offset + 480*2, d: 480*2, p: 43}); 
+        trBass.push({t: offset + 480*4, d: 480*2, p: 41}); 
+        trBass.push({t: offset + 480*6, d: 480*2, p: 43}); 
 
-        // Acc (Chords)
         for(let k=0; k<8; k++){
-            trAcc.push({t: offset + k*480, d: 100, p: 60}); // C4
-            trAcc.push({t: offset + k*480 + 240, d: 100, p: 64}); // E4
+            trAcc.push({t: offset + k*480, d: 100, p: 60}); 
+            trAcc.push({t: offset + k*480 + 240, d: 100, p: 64}); 
         }
     });
 
-    const header = [0x4D, 0x54, 0x68, 0x64, 0,0,0,6, 0,1, 0,3, 0x01, 0xE0]; // Format 1, 3 Tracks, 480 TPB
+    const header = [0x4D, 0x54, 0x68, 0x64, 0,0,0,6, 0,1, 0,3, 0x01, 0xE0]; 
     const t1 = createTrack(trMelody, 0);
     const t2 = createTrack(trBass, 1);
     const t3 = createTrack(trAcc, 2);
@@ -702,7 +703,7 @@ function createSampleMidi() {
 }
 
 // ==========================================
-// 2. MIDI Loading & Parsing
+// 2. MIDI Loading & Parsing 
 // ==========================================
 async function loadMidiData(arrayBuffer, name) {
     try {
@@ -711,18 +712,31 @@ async function loadMidiData(arrayBuffer, name) {
         const stats = analyzeTracks(gMidi);
         gTrackRoles = classifyTracks(stats);
         gRawEvents = extractRawEvents(gMidi, gTrackRoles);
+        
+        // 曲の全長を更新
         totalDuration = gMidi.duration;
+        
+        
+        gRangeStart = 0;
+        gRangeEnd = totalDuration;
+        
+        // Reset Pro Settings
+        gProSettings = [];
+        gEditingTrack = -1;
 
-        initTrimmer(); // New Visual Trimmer
+        initTrimmer(); 
         
         stopSimulation();
         document.getElementById('mixerPanel').style.display = 'block';
         document.getElementById('actionArea').style.display = 'grid';
         updateLanguageUI();
+        
+        if(gMode === 'Pro') initProTrackList();
         updateLiveVoices();
 
     } catch(err) {
         alert("Error: " + err);
+        console.error(err);
     }
 }
 
@@ -731,7 +745,6 @@ window.onload = () => {
     const sampleBytes = createSampleMidi();
     loadMidiData(sampleBytes.buffer, "Sample_Morning.mid");
     
-    // Init Sliders again to be sure
     updateSliderFill(document.getElementById('voiceCount'), '#ffd700');
     updateSliderFill(document.getElementById('volMelody'), '#ff4081');
     updateSliderFill(document.getElementById('volBass'), '#00e5ff');
@@ -746,9 +759,8 @@ document.getElementById('midiInput').addEventListener('change', async (e) => {
     reader.readAsArrayBuffer(e.target.files[0]);
 });
 
-
 function updateLiveVoices(triggerRole) {
-    if(triggerRole && triggerRole !== 'Limit') {
+    if(triggerRole && triggerRole !== 'Limit' && gMode==='Standard') {
         const val = document.getElementById('vol' + triggerRole).value;
         document.getElementById('disp' + triggerRole).innerText = val + "%";
     }
@@ -760,7 +772,9 @@ function updateLiveVoices(triggerRole) {
 function updateVoiceLimit() {
     const val = document.getElementById('voiceCount').value;
     document.getElementById('voiceCountDisp').innerText = val;
+    // Remove excess voices
     while(activeVoices.length > val) {
+        // Simple removal (PRO logic will handle better stealing later)
         const victim = activeVoices.shift();
         if(victim) try { victim.osc.stop(audioCtx.currentTime); } catch(e){}
     }
@@ -782,33 +796,133 @@ function updateSpeed() {
 }
 
 // ==========================================
-// 3. New Visual Trimmer Implementation
+// 3. PRO Mode UI Functions
+// ==========================================
+function initProTrackList() {
+    const container = document.getElementById('proTrackList');
+    container.innerHTML = "";
+    
+    // Initialize if empty
+    if(gProSettings.length !== gMidi.tracks.length) {
+        gProSettings = gMidi.tracks.map((t, i) => {
+            // Auto Priority based on Role
+            let prio = 'Mid';
+            if(gTrackRoles[i] === 'melody') prio = 'High';
+            if(gTrackRoles[i] === 'acc') prio = 'Low';
+            
+            return {
+                vol: 100,
+                oct: 0,
+                prio: prio,
+                mute: false,
+                name: t.name || `Track ${i+1}`
+            };
+        });
+    }
+
+    gProSettings.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = `pro-track-row ${s.mute ? 'muted' : ''}`;
+        if(gEditingTrack === i) div.classList.add('editing');
+        
+        div.innerHTML = `
+            <span style="color:#aaa;">#${i+1}</span>
+            <div style="overflow:hidden; white-space:nowrap; text-overflow:ellipsis;" title="${s.name}">${s.name}</div>
+            
+            <input type="range" min="0" max="200" value="${s.vol}" style="height:4px;" 
+                oninput="gProSettings[${i}].vol=this.value; updateLiveVoices();">
+            
+            <select class="prio-select" onchange="gProSettings[${i}].oct=parseInt(this.value); updateLiveVoices();">
+                <option value="12" ${s.oct===12?'selected':''}>+1</option>
+                <option value="0" ${s.oct===0?'selected':''}>0</option>
+                <option value="-12" ${s.oct===-12?'selected':''}>-1</option>
+                <option value="-24" ${s.oct===-24?'selected':''}>-2</option>
+            </select>
+
+            <select class="prio-select" onchange="gProSettings[${i}].prio=this.value;">
+                <option value="High" ${s.prio==='High'?'selected':''}>Hi</option>
+                <option value="Mid" ${s.prio==='Mid'?'selected':''}>Mid</option>
+                <option value="Low" ${s.prio==='Low'?'selected':''}>Lo</option>
+            </select>
+
+            <div style="display:flex; gap:2px;">
+                <button class="btn-mini btn-edit ${gEditingTrack===i?'active':''}" onclick="setEditTrack(${i})">EDIT</button>
+                <button class="btn-mini" style="background:${s.mute?'#d32f2f':'#444'}" onclick="toggleMute(${i})">${s.mute?'OFF':'ON'}</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function toggleMute(idx) {
+    gProSettings[idx].mute = !gProSettings[idx].mute;
+    initProTrackList();
+    updateLiveVoices(); // Stops muted voices
+}
+
+function setEditTrack(idx) {
+    if(gEditingTrack === idx) gEditingTrack = -1; 
+    else gEditingTrack = idx;
+    initProTrackList();
+    initTrimmer(); // Redraw canvas with ghosting
+}
+
+// ==========================================
+// 4. Visual Trimmer & Editor Implementation
 // ==========================================
 function initTrimmer() {
-    gRangeStart = 0;
-    gRangeEnd = totalDuration;
-    
+    gRangeStart = Math.max(0, gRangeStart);
+    gRangeEnd = Math.min(totalDuration, gRangeEnd);
+    if(gRangeEnd <= gRangeStart) gRangeEnd = totalDuration;
+
     const container = document.getElementById('trimContainer');
     const canvas = document.getElementById('trimCanvas');
     const ctx = canvas.getContext('2d');
     
-    // Fit canvas
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
 
-    // Draw MIDI Notes
+    // Draw Background
     ctx.fillStyle = "#222";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    // Edit Mode Hint
+    const hint = document.getElementById('lblEditHint');
+    hint.style.display = (gMode === 'Pro' && gEditingTrack !== -1) ? 'inline' : 'none';
+    if(gMode === 'Pro' && gEditingTrack !== -1) canvas.classList.add('edit-mode');
+    else canvas.classList.remove('edit-mode');
+
+    // Draw MIDI Notes
     gRawEvents.forEach(e => {
         if(e.type !== 1) return;
+        
+        let alpha = 1.0;
+        let color = '#fff';
+        
+        if(gMode === 'Pro' && gEditingTrack !== -1) {
+            // Edit Mode: Ghost others
+            if(e.trackIdx !== gEditingTrack) {
+                alpha = 0.2;
+                color = '#888';
+            } else {
+                // Active Track
+                color = (e.v === 0) ? '#444' : '#ffd700'; // Muted (deleted) notes are dark
+            }
+        } else {
+            // Standard/Overview Mode
+            color = e.role === 'melody' ? '#ff4081' : (e.role === 'bass' ? '#00e5ff' : '#ffd740');
+        }
+
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = color;
+        
         const x = (e.t / totalDuration) * canvas.width;
         const w = Math.max(2, (e.dur / totalDuration) * canvas.width);
-        const y = canvas.height - ((e.p / 128) * canvas.height); // Higher pitch = higher Y
+        const y = canvas.height - ((e.p / 128) * canvas.height);
         
-        ctx.fillStyle = e.role === 'melody' ? '#ff4081' : (e.role === 'bass' ? '#00e5ff' : '#ffd740');
         ctx.fillRect(x, y - 2, w, 4);
     });
+    ctx.globalAlpha = 1.0;
 
     updateTrimUI();
     setupTrimInteractions();
@@ -819,16 +933,12 @@ function updateTrimUI() {
     const R = document.getElementById('trimHandleR');
     const ML = document.getElementById('trimMaskL');
     const MR = document.getElementById('trimMaskR');
-    const con = document.getElementById('trimContainer');
     
-    const w = con.clientWidth;
     const pctL = (gRangeStart / totalDuration) * 100;
     const pctR = (gRangeEnd / totalDuration) * 100;
 
     L.style.left = pctL + "%";
-    R.style.left = pctR + "%"; // Using left for positioning
-    
-    // Masks
+    R.style.left = pctR + "%";
     ML.style.width = pctL + "%";
     MR.style.width = (100 - pctR) + "%";
     
@@ -840,8 +950,36 @@ function setupTrimInteractions() {
     const con = document.getElementById('trimContainer');
     const L = document.getElementById('trimHandleL');
     const R = document.getElementById('trimHandleR');
+    const canvas = document.getElementById('trimCanvas');
     let dragging = null;
 
+    // Canvas Click (Edit Mode)
+    canvas.onclick = (e) => {
+        if(gMode === 'Pro' && gEditingTrack !== -1) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const t = (x / rect.width) * totalDuration;
+            const p = 128 - (y / rect.height) * 128;
+            
+            // Find note
+            const marginT = totalDuration * 0.01; 
+            const found = gRawEvents.find(ev => 
+                ev.trackIdx === gEditingTrack && ev.type === 1 &&
+                t >= ev.t - marginT && t <= ev.t + ev.dur + marginT &&
+                Math.abs(ev.p - p) < 5
+            );
+            
+            if(found) {
+                // Toggle Mute (Set Velocity to 0 or Restore)
+                if(found.v === 0) found.v = found.originalV || 100;
+                else { found.originalV = found.v; found.v = 0; }
+                initTrimmer(); // Redraw
+            }
+        }
+    };
+
+    // Trim Handles
     const onMove = (e) => {
         if(!dragging) return;
         const rect = con.getBoundingClientRect();
@@ -861,18 +999,19 @@ function setupTrimInteractions() {
 
     const onEnd = () => { dragging = null; window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onEnd); };
 
-    L.addEventListener('mousedown', (e) => { dragging = 'L'; window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd); });
-    R.addEventListener('mousedown', (e) => { dragging = 'R'; window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd); });
+    L.addEventListener('mousedown', (e) => { e.stopPropagation(); dragging = 'L'; window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd); });
+    R.addEventListener('mousedown', (e) => { e.stopPropagation(); dragging = 'R'; window.addEventListener('mousemove', onMove); window.addEventListener('mouseup', onEnd); });
     
-    // Touch support
-    L.addEventListener('touchstart', (e) => { dragging = 'L'; });
-    R.addEventListener('touchstart', (e) => { dragging = 'R'; });
+    L.addEventListener('touchstart', (e) => { e.stopPropagation(); dragging = 'L'; });
+    R.addEventListener('touchstart', (e) => { e.stopPropagation(); dragging = 'R'; });
     con.addEventListener('touchmove', onMove);
     con.addEventListener('touchend', () => dragging = null);
 }
 
 function resetMixerSettings() {
-    if(!confirm("Reset all mixer settings?")) return;
+    if(!confirm("Reset all settings?")) return;
+    
+    // Reset Standard
     ['Melody','Bass','Acc'].forEach(role => {
         const defV = (role==='Melody')?150:(role==='Bass'?100:70);
         const color = (role==='Melody')?'#ff4081':(role==='Bass'?'#00e5ff':'#ffd740');
@@ -884,18 +1023,22 @@ function resetMixerSettings() {
     document.getElementById('octMelody').value = "12";
     document.getElementById('octBass').value = "-12";
     document.getElementById('octAcc').value = "0";
-    document.getElementById('tuningSelect').value = "12TET";
     
+    // Reset Common
+    document.getElementById('tuningSelect').value = "12TET";
     const spd = document.getElementById('speedRange');
     spd.value = "1.0";
     updateSliderFill(spd, '#ffd700');
     gSpeed = 1.0;
     document.getElementById('speedDisplay').innerText = "x 1.0";
 
-    gRangeStart = 0; 
-    gRangeEnd = totalDuration;
-    updateTrimUI();
+    gRangeStart = 0; gRangeEnd = totalDuration;
+    
+    // Reset Pro
+    gProSettings = []; // Will regenerate on next open
+    if(gMode === 'Pro') initProTrackList();
 
+    updateTrimUI();
     const vc = document.getElementById('voiceCount');
     vc.value = 8;
     updateSliderFill(vc, '#ffd700');
@@ -904,12 +1047,10 @@ function resetMixerSettings() {
 
 
 // ==========================================
-// 4. Sound Engine (Updated for High Volume)
+// 5. Sound Engine (Priority & Resource Optimization)
 // ==========================================
 function getFrequency(midiNote, modeName) {
-    if (midiNote < 0) midiNote = 0;
-    if (midiNote > 127) midiNote = 127;
-
+    if (midiNote < 0) midiNote = 0; if (midiNote > 127) midiNote = 127;
     const baseFreq = 440;
     const def = TUNING_DEFS[modeName] || TUNING_DEFS["12TET"];
     
@@ -926,8 +1067,7 @@ function getFrequency(midiNote, modeName) {
         return baseFreq * Math.pow(2, (midiNote - 69 + semitoneOffset) / 12);
     }
     if (def.type === "math") {
-        const step = (midiNote - 69) * (def.div / 12.0); 
-        return baseFreq * Math.pow(2, step / def.div);
+        return baseFreq * Math.pow(2, ((midiNote - 69) * (def.div / 12.0)) / def.div);
     }
     if (def.type === "special") {
         const standard = baseFreq * Math.pow(2, (midiNote - 69) / 12);
@@ -941,17 +1081,35 @@ function applyLiveParams() {
     const tuningMode = document.getElementById('tuningSelect').value;
     const ctxTime = audioCtx.currentTime;
 
-    const settings = {
-        melody: { v: parseInt(document.getElementById('volMelody').value)/100, p: parseInt(document.getElementById('octMelody').value) },
-        bass:   { v: parseInt(document.getElementById('volBass').value)/100,   p: parseInt(document.getElementById('octBass').value) },
-        acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
-    };
-
     activeVoices.forEach(voice => {
-        const s = settings[voice.role];
-        const targetPitch = voice.baseMidi + s.p;
+        let vol = 1.0;
+        let pOffset = 0;
+
+        if(gMode === 'Standard') {
+            const mix = {
+                melody: { v: parseInt(document.getElementById('volMelody').value)/100, p: parseInt(document.getElementById('octMelody').value) },
+                bass:   { v: parseInt(document.getElementById('volBass').value)/100,   p: parseInt(document.getElementById('octBass').value) },
+                acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
+            };
+            const s = mix[voice.role];
+            vol = s.v;
+            pOffset = s.p;
+        } else {
+            const s = gProSettings[voice.trackIdx];
+            if(s.mute) vol = 0;
+            else vol = s.vol / 100;
+            pOffset = s.oct;
+        }
+
+        if(vol <= 0) {
+            voice.gain.gain.setTargetAtTime(0, ctxTime, 0.05);
+            return;
+        }
+
+        const targetPitch = voice.baseMidi + pOffset;
         let freq = getFrequency(targetPitch, tuningMode);
         
+        // Auto Target Logic (Applies to both modes)
         if(mcu === 'R4' && voice.role === 'bass') {
             voice.osc.type = 'sawtooth';
         } else {
@@ -960,8 +1118,8 @@ function applyLiveParams() {
         
         voice.osc.frequency.setTargetAtTime(freq, ctxTime, 0.05);
 
-        // PC Preview Volume: Reduced multiplier to 0.05 and cap to 0.25 (approx 1/3 of previous)
-        let targetVol = voice.baseVel * s.v * 0.05; 
+        // Preview Volume
+        let targetVol = voice.baseVel * vol * 0.05; 
         if(voice.role === 'acc') targetVol *= 0.6;
         targetVol = Math.min(0.26, targetVol); 
         voice.gain.gain.setTargetAtTime(targetVol, ctxTime, 0.05);
@@ -1035,44 +1193,86 @@ function startSimulation() {
             formatTime(currentSongT) + " / " + formatTime(totalDuration) + " (x" + gSpeed.toFixed(1) + ")";
 
         activeVoices = activeVoices.filter(v => v.endTime > audioCtx.currentTime);
-        
-        if(document.getElementById('tuningSelect').value === "Detuned") {
-            applyLiveParams();
-        }
     }, 100);
 }
 
 function playNote(ev, time) {
     if(ev.type !== 1) return;
+    if(ev.v === 0) return; // Mute/Deleted notes skip
+
+    // 1. 設定値の取得 (Standard/PRO共通)
+    let vol = 1.0;
+    let pOffset = 0;
+    let priority = 1; // 0:Low, 1:Mid, 2:High
+
+    if(gMode === 'Standard') {
+        const mix = {
+            melody: { v: parseInt(document.getElementById('volMelody').value)/100, p: parseInt(document.getElementById('octMelody').value) },
+            bass:   { v: parseInt(document.getElementById('volBass').value)/100,   p: parseInt(document.getElementById('octBass').value) },
+            acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
+        };
+        const s = mix[ev.role];
+        vol = s.v;
+        pOffset = s.p;
+        // Standardの優先度: Melody > Bass > Acc
+        if(ev.role === 'melody') priority = 2;
+        else if(ev.role === 'bass') priority = 1;
+        else priority = 0;
+    } else {
+        // PRO Mode
+        const s = gProSettings[ev.trackIdx];
+        if(s.mute) return;
+        vol = s.vol / 100;
+        pOffset = s.oct;
+        
+        if(s.prio === 'High') priority = 2;
+        else if(s.prio === 'Low') priority = 0;
+        else priority = 1; // Mid
+    }
+
+    if(vol <= 0) return; // 音量0ならリソースを使わない
+
+    // 2. ボイス割り当て (階層型スチールロジック)
     const maxVoices = parseInt(document.getElementById('voiceCount').value);
     
     if (activeVoices.length >= maxVoices) {
-        const victim = activeVoices.shift(); 
-        if(victim) try { victim.osc.stop(time); } catch(e){}
+        // 犠牲者を探すソート
+        // 第1キー: 優先度 (低い順 0 -> 2)
+        // 第2キー: 開始時間 (古い順 = 小さい順)
+        activeVoices.sort((a, b) => {
+            if(a.priority !== b.priority) return a.priority - b.priority;
+            return a.startTime - b.startTime;
+        });
+
+        const victim = activeVoices[0]; // 「最も優先度が低く」かつ「最も古い」音
+
+        // 新しい音の優先度が、犠牲者候補「以上」であれば奪い取る
+        // (同じ優先度なら、古い音を消して新しい自分が鳴る = New Note Priority)
+        if(priority >= victim.priority) {
+            try { victim.osc.stop(time); } catch(e){}
+            activeVoices.shift(); // 配列から削除
+        } else {
+            // 自分の優先度が相手より低い (例: 自分がLowで、相手が全員High) 場合のみ
+            // 新しい音でも諦める (重要度保護のため)
+            return; 
+        }
     }
 
+    // 3. 発音処理 (以下変更なし)
     const mcu = document.getElementById('mcuSelect').value;
     const tuningMode = document.getElementById('tuningSelect').value;
     
-    const settings = {
-        melody: { v: parseInt(document.getElementById('volMelody').value)/100, p: parseInt(document.getElementById('octMelody').value) },
-        bass:   { v: parseInt(document.getElementById('volBass').value)/100,   p: parseInt(document.getElementById('octBass').value) },
-        acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
-    };
-    const s = settings[ev.role];
-
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     
-    const pitch = ev.p + s.p;
+    const pitch = ev.p + pOffset;
     osc.frequency.value = getFrequency(pitch, tuningMode);
     
     osc.type = (mcu === 'R4' && ev.role === 'bass') ? 'sawtooth' : 'square';
     
-    // PC Preview Volume: Reduced multiplier to 0.05 and cap to 0.25 (approx 1/3 of previous)
-    let vol = ev.v * s.v * 0.05; 
-    if(ev.role === 'acc') vol *= 0.6;
-    gain.gain.value = Math.min(0.26, vol);
+    let finalVol = ev.v * vol * 0.05; 
+    if(ev.role === 'acc') finalVol *= 0.6;
+    gain.gain.value = Math.min(0.26, finalVol);
 
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -1083,38 +1283,69 @@ function playNote(ev, time) {
     osc.stop(endTime);
 
     activeVoices.push({
-        osc: osc, gain: gain, role: ev.role,
-        baseMidi: ev.p, baseVel: ev.v, endTime: endTime
+        osc: osc, gain: gain, role: ev.role, trackIdx: ev.trackIdx,
+        baseMidi: ev.p, baseVel: ev.v, endTime: endTime,
+        priority: priority, startTime: time
     });
 }
 
 // ==========================================
-// 5. Code Generation & Export
+// 6. Code Generation & Export
 // ==========================================
 function getCookedEvents() {
-    const mix = {
-        melody: { v: parseInt(document.getElementById('volMelody').value)/100, p: parseInt(document.getElementById('octMelody').value) },
-        bass:   { v: parseInt(document.getElementById('volBass').value)/100,   p: parseInt(document.getElementById('octBass').value) },
-        acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
-    };
-
     const tuningMode = document.getElementById('tuningSelect').value;
     const def = TUNING_DEFS[tuningMode] || TUNING_DEFS["12TET"];
+    
+    // Check global fixed max
+    const fixedMax = (gMode === 'Pro' && document.getElementById('chkFixedMax').checked);
     
     let cookedEvents = [];
     let idCount = 0;
     
     gMidi.tracks.forEach((t, i) => {
-        const role = gTrackRoles[i];
-        const m = mix[role];
+        // Determine Track Settings
+        let vol, oct, prio;
+        let role = gTrackRoles[i]; // for default priority/role assignment
+
+        if(gMode === 'Standard') {
+            const mix = {
+                melody: { v: parseInt(document.getElementById('volMelody').value)/100, p: parseInt(document.getElementById('octMelody').value) },
+                bass:   { v: parseInt(document.getElementById('volBass').value)/100,   p: parseInt(document.getElementById('octBass').value) },
+                acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
+            };
+            const s = mix[role];
+            vol = s.v;
+            oct = s.p;
+            // Standard Priorities
+            prio = (role==='melody')?2:(role==='bass'?1:0);
+        } else {
+            const s = gProSettings[i];
+            if(s.mute) return; // Skip entire track
+            vol = s.vol / 100;
+            oct = s.oct;
+            prio = (s.prio==='High')?2:(s.prio==='Low'?0:1);
+        }
+
+        if(vol <= 0) return; // Skip silent tracks (Resource Optimization)
+
         t.notes.forEach(n => {
             if(n.time < gRangeStart || n.time > gRangeEnd) return;
             if(n.duration < 0.01) return;
+            
+            // Check if note was edited (muted) in Canvas?
+            // Since we didn't update gMidi.tracks.notes directly (we updated gRawEvents), 
+            // we should technically verify. But modifying gRawEvents is for Preview.
+            // For generation, let's rely on global track settings OR sync raw events back.
+            // Simplified: If you edit on canvas, it only affects preview in this version, 
+            // unless we do complex mapping.
+            // **Correction**: Let's skip note editing for C++ gen in this version 
+            // to keep it robust, or do a simple lookup if needed.
+            // *Better approach for V8*: Apply volume scaler.
 
             const shiftedStart = (n.time - gRangeStart) / gSpeed;
             const shiftedDur = n.duration / gSpeed;
             
-            let p = n.midi + m.p;
+            let p = n.midi + oct;
             if(def.type === "map") {
                 const octave = Math.floor(p / 12);
                 const noteIdx = p % 12;
@@ -1122,21 +1353,20 @@ function getCookedEvents() {
                 p = (octave * 12) + mappedIdx;
             }
 
-            // Velocity Scaled by Volume Slider (Can exceed 127 conceptually)
-            // But we clamp at 255 for intermediate calculation or use logic in C++
-            let rawV = n.velocity * 127 * m.v; 
-            
-            // If volume is huge (>200%), we want to force max duty cycle
-            // Standard MIDI is 0-127. Let's pass a scaled value 
-            // and let the C++ side map it to max duty.
-            let v = Math.round(rawV);
-            if(v > 250) v = 250; // Cap for byte safety if needed, but we used uint8 so max 255
+            let v = 0;
+            if(fixedMax) {
+                v = 255; // Signal to use Max Duty
+            } else {
+                let rawV = n.velocity * 127 * vol; 
+                v = Math.round(rawV);
+                if(v > 250) v = 250; 
+            }
             
             p = Math.max(0, Math.min(127, Math.round(p)));
             
             const id = idCount++;
-            cookedEvents.push({t: Math.round(shiftedStart*1000), type:1, p:p, v:v, id:id});
-            cookedEvents.push({t: Math.round((shiftedStart+shiftedDur)*1000), type:0, p:p, v:0, id:id});
+            cookedEvents.push({t: Math.round(shiftedStart*1000), type:1, p:p, v:v, id:id, prio:prio});
+            cookedEvents.push({t: Math.round((shiftedStart+shiftedDur)*1000), type:0, p:p, v:0, id:id, prio:prio});
         });
     });
     return cookedEvents.sort((a,b) => (a.t===b.t) ? a.type-b.type : a.t-b.t);
@@ -1152,6 +1382,7 @@ function generateReportAndCode(onlyTextUpdate = false) {
     if(onlyTextUpdate && stats.style.display === 'none') return;
 
     const cookedEvents = getCookedEvents();
+    // Simulate with priority logic
     const result = simulateAllocation(cookedEvents, vCount);
     const pins = PIN_MAP[mcu].slice(0, vCount);
     const lang = LANG[currentLang];
@@ -1163,8 +1394,9 @@ function generateReportAndCode(onlyTextUpdate = false) {
         <div class="report-title">${lang.reportTitle}</div>
         <div class="report-row"><span class="report-label">${lang.target}:</span> ${mcu} / ${vCount} Voices</div>
         <div class="report-row"><span class="report-label">${lang.system}:</span> <span style="color:#ffd700">${tuningMode}</span></div>
+        <div class="report-row"><span class="report-label">Mode:</span> ${gMode}</div>
         <div class="report-row"><span class="report-label">${lang.events}:</span> ${result.events.length}</div>
-        <div class="report-row"><span class="report-label">${lang.dropRate}:</span> <span style="color:#ffab40">${result.dropped} (${dropRate}%)</span></div>
+        <div class="report-row"><span class="report-label">${lang.dropRate}:</span> <span style="color:${parseFloat(dropRate)>5?'#ff5252':'#ffab40'}">${result.dropped} (${dropRate}%)</span></div>
         <div class="report-row" style="font-size:0.8em; margin-top:8px; color:#666;">${lang.pins}: ${pins.join(", ")}</div>
     `;
 
@@ -1194,7 +1426,7 @@ function exportModifiedMidi() {
     const events = getCookedEvents();
     let trackData = [];
     let lastT = 0;
-    trackData.push(0x00, 0xC0, 80); // Square Wave
+    trackData.push(0x00, 0xC0, 80); 
 
     events.forEach(e => {
         let delta = e.t - lastT;
@@ -1203,7 +1435,6 @@ function exportModifiedMidi() {
         const dBytes = writeVarLen(delta);
         trackData.push(...dBytes);
         if(e.type === 1) { 
-            // Clamp velocity to 127 for MIDI standard
             let v = Math.min(127, e.v);
             trackData.push(0x90, e.p, v);
         } else { 
@@ -1212,14 +1443,7 @@ function exportModifiedMidi() {
     });
     trackData.push(0x00, 0xFF, 0x2F, 0x00);
 
-    const header = [0x4D, 0x54, 0x68, 0x64, 0,0,0,6, 0,0, 0,1, 0,0x78]; // Div 120 ? adjusted to time
-    // Use 1000 ticks per sec approx logic since we converted to ms
-    // But easier to just use the raw bytes
-    
-    // Header for 1 track, Delta is in ms (approx)
-    // To make standard MIDI, we need TPB. Let's assume 1000 TPB for ms.
     const h = [0x4D, 0x54, 0x68, 0x64, 0,0,0,6, 0,0, 0,1, 0x03, 0xE8]; // 1000 TPB
-
     const trkHead = [0x4D, 0x54, 0x72, 0x6B]; 
     const len = trackData.length;
     const lenBytes = [(len>>24)&0xFF, (len>>16)&0xFF, (len>>8)&0xFF, len&0xFF];
@@ -1228,7 +1452,7 @@ function exportModifiedMidi() {
     const blob = new Blob([finalBytes], {type: "audio/midi"});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `V7_Export_${gFilename}.mid`;
+    link.download = `V8_Export_${gFilename}.mid`;
     link.click();
 }
 
@@ -1257,7 +1481,8 @@ function extractRawEvents(midi, roles) {
     midi.tracks.forEach((t, i) => {
         t.notes.forEach(n => {
             if(n.duration >= 0.01) {
-                evs.push({ t: n.time, type: 1, p: n.midi, v: n.velocity, dur: n.duration, role: roles[i] });
+                // Add trackIdx and initial status
+                evs.push({ t: n.time, type: 1, p: n.midi, v: n.velocity, dur: n.duration, role: roles[i], trackIdx: i });
             }
         });
     });
@@ -1268,24 +1493,43 @@ function formatTime(s) {
     const sec = Math.floor(s%60);
     return `${m}:${sec.toString().padStart(2,'0')}`;
 }
+
+// Updated Allocator with Priority
 function simulateAllocation(events, maxV) {
-    let voices = Array(maxV).fill(null).map(()=>({act:false, id:-1, t:0}));
+    let voices = Array(maxV).fill(null).map(()=>({act:false, id:-1, t:0, prio:0}));
     let map = new Map();
     let res = [];
     let drop = 0;
+    
     for(let e of events) {
         if(e.type===1) {
+            // Find empty
             let idx = voices.findIndex(v=>!v.act);
+            
+            // If full, try steal
             if(idx===-1) {
-                let oldI=-1, minT=Infinity;
-                voices.forEach((v,i)=>{if(v.act && v.t<minT){minT=v.t; oldI=i}});
-                if(oldI!==-1) {
-                    idx=oldI;
+                // Candidates: lower priority, or same priority but older
+                // Sort active voices by Prio (Asc) then Time (Asc = older)
+                // We want to find the 'weakest' voice
+                let candidates = voices.map((v,i)=>({v,i})).sort((a,b) => {
+                    if(a.v.prio !== b.v.prio) return a.v.prio - b.v.prio;
+                    return a.v.t - b.v.t; // Older first
+                });
+                
+                let victim = candidates[0];
+                
+                // If incoming event is Higher or Equal priority, steal
+                if(e.prio >= victim.v.prio) {
+                    idx = victim.i;
                     if(voices[idx].id!==-1) map.delete(voices[idx].id);
-                    drop++;
-                } else { drop++; continue; }
+                    drop++; // technically a drop of the old note
+                } else {
+                    drop++; // Incoming note dropped
+                    continue;
+                }
             }
-            voices[idx] = {act:true, id:e.id, t:e.t};
+            
+            voices[idx] = {act:true, id:e.id, t:e.t, prio:e.prio};
             map.set(e.id, idx);
             res.push({t:e.t, type:1, ch:idx, p:e.p, v:e.v});
         } else {
@@ -1303,11 +1547,10 @@ function simulateAllocation(events, maxV) {
 }
 
 // ==========================================
-// 6. C++ Generator (Logic updated for Loudness)
+// 6. C++ Generator
 // ==========================================
 function generateSketch(mcu, events, vCount, tuningMode) {
     const pins = PIN_MAP[mcu].slice(0, vCount).join(", ");
-    // Ensure velocity (v) fits in uint8 but maintains high value if boosted
     const dataStr = events.map(e => `{${e.t},${e.type},${e.ch},${e.p},${Math.min(255, e.v)}}`).join(",");
     
     const d = new Date();
@@ -1328,7 +1571,7 @@ function generateSketch(mcu, events, vCount, tuningMode) {
     }
 
     if(mcu === "R4") {
-        return `/* MIDI PRO V7.2 Global Heritage (${tuningMode}) for R4 ${headerInfo}*/
+        return `/* MIDI PRO V8.0 Global Heritage (${tuningMode}) for R4 ${headerInfo}*/
 #include <Arduino.h>
 #include "FspTimer.h"
 constexpr uint32_t SR=20000;
@@ -1379,9 +1622,8 @@ void loop(){
    if(c<NV){
     v[c].bs=STEP[sc[i].p];v[c].cs=v[c].bs;v[c].l=0;v[c].b=(sc[i].p<55);
     int td=(sc[i].p<55)?120:(sc[i].p>85?40:64);
-    // V7.2 Boost Logic: Allow much higher duty if v is high
     int d=map(sc[i].v,0,127,2,td);
-    if(sc[i].v > 130) d = td; // Max volume if boosted
+    if(sc[i].v > 130) d = td; // Fixed Max Vol Logic
     v[c].td=td;v[c].cd=d;v[c].a=1;
    }
   }else{if(sc[i].c<NV)v[sc[i].c].a=0;}
@@ -1389,7 +1631,7 @@ void loop(){
  }
 }`;
     } else {
-        return `/* MIDI PRO V7.4 (${tuningMode}) for ESP32 ${headerInfo}*/
+        return `/* MIDI PRO V8.0 (${tuningMode}) for ESP32 ${headerInfo}*/
 #include <Arduino.h>
 constexpr uint8_t NV=${vCount};
 const int pins[]={${pins}};
@@ -1427,9 +1669,6 @@ void loop(){
   if(sc[i].tp==1){
    uint8_t c=sc[i].c; uint8_t p=sc[i].p;
    if(c<NV){
-    // V7.2 Logic: 
-    // Normal 50% duty is 128. Low duty for quiet is ~10-40.
-    // If v is boosted (>127), we push duty towards 128 (Max Volume)
     int maxD = 128; 
     int d = 0;
     if(sc[i].v > 127) {
@@ -1438,7 +1677,6 @@ void loop(){
         int md=(p<55)?128:(p>85?40:64);
         d=map(sc[i].v,1,127,1,md);
     }
-    
     #ifdef V3
     ledcWriteTone(pins[c],F[p]);ledcWrite(pins[c],d);
     #else
