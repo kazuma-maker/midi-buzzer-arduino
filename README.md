@@ -9,7 +9,7 @@ Arduino passive buzzer playing MIDI converted data.
 
 Polyphonic Synthesizer Generator for Arduino with Passive Buzzers.
 
-[Open Application (V8.0 PRO)](https://kazuma-maker.github.io/midi-buzzer-arduino/)
+[Open Application (V8.0 PRO)](https://kazuma-maker.github.io/midi-buzzer-arduino/?v=8.0)
 
 ★★ Overview
 This tool runs entirely in your web browser. It converts standard MIDI files (.mid) into optimized C++ source code for --Arduino UNO R4-- and --ESP32--.
@@ -65,7 +65,7 @@ MIT License
 
 複数のパッシブブザーを使用して、Arduinoを多重和音シンセサイザーに変身させるWebツールです。
 
-[アプリを開く ](https://kazuma-maker.github.io/midi-buzzer-arduino/)
+[アプリを開く ](https://kazuma-maker.github.io/midi-buzzer-arduino/?v=8.0)
 
 ★★ 概要
 このツールはブラウザ上で動作し、標準的なMIDIファイル (.mid) を --Arduino UNO R4-- または --ESP32-- 用のC++ソースコードに変換します。
@@ -115,6 +115,7 @@ MIT License
 ★★ ライセンス
 
 MIT License
+
 
 
 
