@@ -2,11 +2,11 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MIDI ArduinoIDE PRO V8.0</title>
+    <title>MIDI ArduinoIDE PRO V9.1 (Optimized)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.27/build/Midi.js"></script>
     <style>
         /* =========================================
-           V8.0 Theme: Global Heritage (Dark & Gold)
+           V9.1 Theme: Global Heritage (Dark & Gold)
            ========================================= */
         body { 
             font-family: 'Biz UDPGothic', 'Meiryo', sans-serif; 
@@ -41,13 +41,27 @@
             margin-left: 10px;
         }
         .header-btns {
-            display: flex; gap: 10px;
+            display: flex; gap: 10px; align-items: center;
         }
         .lang-btn {
             background: #333; color: #ccc; border: 1px solid #555;
             padding: 5px 10px; cursor: pointer; font-size: 12px; border-radius: 4px;
         }
         .lang-btn:hover { background: #444; color: #fff; }
+
+        /* --- MODE TABS (NEW) --- */
+        .mode-tabs {
+            display: flex; background: #333; border-radius: 4px; padding: 2px; margin-right: 10px;
+        }
+        .tab-btn {
+            border: none; background: transparent; color: #aaa;
+            padding: 6px 12px; cursor: pointer; font-weight: bold; border-radius: 3px;
+            transition: 0.2s; font-size: 12px;
+        }
+        .tab-btn.active {
+            background: #ffd700; color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .tab-btn:hover:not(.active) { color: #fff; background: #444; }
 
         /* Quick Start */
         .quick-start {
@@ -86,6 +100,24 @@
             width: 16px; height: 16px; border: none; border-radius: 50%;
             background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.5); cursor: pointer;
         }
+        /* Disabled state for sliders */
+        input[type=range]:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* --- TOGGLE SWITCH (NEW) --- */
+        .toggle-switch {
+            position: relative; display: inline-block; width: 40px; height: 20px; vertical-align: middle;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider-sw {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #444; transition: .4s; border-radius: 20px;
+        }
+        .slider-sw:before {
+            position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider-sw { background-color: #ffd700; }
+        input:checked + .slider-sw:before { transform: translateX(20px); }
 
         /* Mixer Panel */
         .mixer-panel {
@@ -234,9 +266,12 @@
 
 <div class="container">
     <header>
-        <h1>MIDI ArduinoIDE <span>PRO V8.0</span></h1>
+        <h1>MIDI ArduinoIDE <span>PRO V9.1</span></h1>
         <div class="header-btns">
-            <button class="lang-btn" id="btnMode" onclick="toggleMode()" style="background:#ff4081; color:#fff; font-weight:bold;">MODE: STANDARD</button>
+            <div class="mode-tabs">
+                <button id="tabStd" class="tab-btn active" onclick="setMode('Standard')">STANDARD</button>
+                <button id="tabPro" class="tab-btn" onclick="setMode('Pro')">PRO MODE</button>
+            </div>
             <button class="lang-btn" onclick="toggleLanguage()" id="btnLang">English</button>
         </div>
     </header>
@@ -257,10 +292,17 @@
         </div>
         <div>
             <label id="lblTarget">2. Target & Engine</label>
-            <select id="mcuSelect" onchange="updateLiveVoices()">
-                <option value="R4">Arduino UNO R4 (V2: PWM Poly)</option>
-                <option value="ESP32">ESP32 (V2: High Fidelity)</option>
-            </select>
+            <div style="display:flex; gap:5px;">
+                <select id="mcuSelect" onchange="toggleEngineUI(); updateLiveVoices()" style="flex:1;">
+                    <option value="R4">Arduino UNO R4</option>
+                    <option value="R3">Arduino UNO R3 (12-Voice 1-bit)</option>
+                    <option value="ESP32">ESP32 (High Fidelity)</option>
+                </select>
+                <select id="engineSelect" onchange="toggleEngineUI(); updateLiveVoices()" style="flex:1; display:none;">
+                    <option value="PWM">PWM (Poly + Vol)</option>
+                    <option value="1BIT">1-bit (Retro/Solid)</option>
+                </select>
+            </div>
         </div>
         <div>
             <label id="lblVoice">3. Voices (Pins)</label>
@@ -322,7 +364,7 @@
             <div class="channel-strip ch-melody">
                 <span class="role-tag tag-melody">MELODY</span>
                 <div class="param-row">
-                    <span>Vol: <span id="dispMelody">150%</span></span>
+                    <span id="lblVolMelody">Vol: <span id="dispMelody">150%</span></span>
                     <select id="octMelody" class="mini-select" onchange="updateLiveVoices()">
                         <option value="36">+3 Oct</option>
                         <option value="24">+2 Oct</option>
@@ -332,13 +374,22 @@
                         <option value="-24">-2 Oct</option>
                     </select>
                 </div>
-                <input type="range" id="volMelody" min="0" max="600" value="150" oninput="updateLiveVoices('Melody'); updateSliderFill(this, '#ff4081');">
+                <div id="wrapVolMelody" style="display:block;">
+                    <input type="range" id="volMelody" min="0" max="600" value="150" oninput="updateLiveVoices('Melody'); updateSliderFill(this, '#ff4081');">
+                </div>
+                <div id="wrapSwMelody" style="display:none; margin-top:10px;">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="swMelody" checked onchange="updateLiveVoices()">
+                        <span class="slider-sw round"></span>
+                    </label>
+                    <span style="font-size:0.8em; font-weight:bold; margin-left:5px;">ACTIVE</span>
+                </div>
             </div>
             
             <div class="channel-strip ch-bass">
                 <span class="role-tag tag-bass">BASS</span>
                 <div class="param-row">
-                    <span>Vol: <span id="dispBass">100%</span></span>
+                    <span id="lblVolBass">Vol: <span id="dispBass">100%</span></span>
                     <select id="octBass" class="mini-select" onchange="updateLiveVoices()">
                         <option value="12">+1 Oct</option>
                         <option value="0">±0</option>
@@ -347,13 +398,22 @@
                         <option value="-36">-3 Oct</option>
                     </select>
                 </div>
-                <input type="range" id="volBass" min="0" max="600" value="100" oninput="updateLiveVoices('Bass'); updateSliderFill(this, '#00e5ff');">
+                <div id="wrapVolBass" style="display:block;">
+                    <input type="range" id="volBass" min="0" max="600" value="100" oninput="updateLiveVoices('Bass'); updateSliderFill(this, '#00e5ff');">
+                </div>
+                <div id="wrapSwBass" style="display:none; margin-top:10px;">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="swBass" checked onchange="updateLiveVoices()">
+                        <span class="slider-sw round"></span>
+                    </label>
+                    <span style="font-size:0.8em; font-weight:bold; margin-left:5px;">ACTIVE</span>
+                </div>
             </div>
 
             <div class="channel-strip ch-acc">
                 <span class="role-tag tag-acc">BACKING</span>
                 <div class="param-row">
-                    <span>Vol: <span id="dispAcc">70%</span></span>
+                    <span id="lblVolAcc">Vol: <span id="dispAcc">70%</span></span>
                     <select id="octAcc" class="mini-select" onchange="updateLiveVoices()">
                         <option value="24">+2 Oct</option>
                         <option value="12">+1 Oct</option>
@@ -362,7 +422,16 @@
                         <option value="-24">-2 Oct</option>
                     </select>
                 </div>
-                <input type="range" id="volAcc" min="0" max="600" value="70" oninput="updateLiveVoices('Acc'); updateSliderFill(this, '#ffd740');">
+                <div id="wrapVolAcc" style="display:block;">
+                    <input type="range" id="volAcc" min="0" max="600" value="70" oninput="updateLiveVoices('Acc'); updateSliderFill(this, '#ffd740');">
+                </div>
+                <div id="wrapSwAcc" style="display:none; margin-top:10px;">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="swAcc" checked onchange="updateLiveVoices()">
+                        <span class="slider-sw round"></span>
+                    </label>
+                    <span style="font-size:0.8em; font-weight:bold; margin-left:5px;">ACTIVE</span>
+                </div>
             </div>
         </div>
 
@@ -597,7 +666,8 @@ let gEditingTrack = -1; // -1:None, >=0: TrackIdx
 
 const PIN_MAP = {
     ESP32: [32, 33, 27, 4, 5, 18, 19, 21, 22, 23, 13, 12], 
-    R4:    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] 
+    R4:    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+    R3:    [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14] // 14=A0
 };
 
 // ==========================================
@@ -612,32 +682,73 @@ function updateSliderFill(el, color) {
     el.style.background = `linear-gradient(to right, ${color} 0%, ${color} ${stopPosition}, #444 ${stopPosition}, #444 100%)`;
 }
 
-function toggleMode() {
-    gMode = (gMode === 'Standard') ? 'Pro' : 'Standard';
-    const btn = document.getElementById('btnMode');
+// 修正: 1bitモード判定とUI切替
+function toggleEngineUI() {
+    const mcu = document.getElementById('mcuSelect').value;
+    const eng = document.getElementById('engineSelect');
+    
+    // R4のときだけエンジン選択を表示
+    eng.style.display = (mcu === 'R4') ? 'block' : 'none';
+    
+    // 1-bitモード判定 (R3 または R4かつ1BIT)
+    const is1Bit = (mcu === 'R3') || (mcu === 'R4' && eng.value === '1BIT');
+
+    // --- Standard Mode UI制御 ---
+    ['Melody', 'Bass', 'Acc'].forEach(role => {
+        const wrapVol = document.getElementById('wrapVol' + role);
+        const wrapSw = document.getElementById('wrapSw' + role);
+        const lbl = document.getElementById('lblVol' + role);
+        const disp = document.getElementById('disp' + role);
+        const slider = document.getElementById('vol' + role);
+
+        if(is1Bit) {
+            // 1-bit: スライダー隠す、スイッチ出す
+            if(wrapVol) wrapVol.style.display = 'none';
+            if(wrapSw) wrapSw.style.display = 'block';
+            if(lbl) lbl.innerHTML = "STATUS: "; // ラベル変更
+        } else {
+            // PWM: スライダー出す、スイッチ隠す
+            if(wrapVol) wrapVol.style.display = 'block';
+            if(wrapSw) wrapSw.style.display = 'none';
+            if(lbl) lbl.innerHTML = "Vol: <span id='disp"+role+"'>"+slider.value+"%</span>";
+        }
+    });
+
+    // --- Pro Mode UI制御 ---
+    // Proリストが生成済みなら再描画して反映
+    if(gMode === 'Pro') {
+        initProTrackList();
+    }
+}
+
+// 修正: 新しいモード切替
+function setMode(mode) {
+    gMode = mode;
+    
+    // タブの見た目更新
+    document.getElementById('tabStd').className = (mode === 'Standard') ? 'tab-btn active' : 'tab-btn';
+    document.getElementById('tabPro').className = (mode === 'Pro') ? 'tab-btn active' : 'tab-btn';
+
+    // パネル表示切替
     const mixerStd = document.getElementById('standardMixer');
     const proPanel = document.getElementById('proPanel');
     const mixerHdr = document.getElementById('hdrMixer');
 
     if(gMode === 'Pro') {
-        btn.innerText = "MODE: PRO";
-        btn.style.background = "#00e5ff"; // Cyan for Pro
-        btn.style.color = "#000";
         proPanel.style.display = 'block';
         mixerStd.style.display = 'none';
-        mixerHdr.innerText = "PRO MIXER & EDITOR";
+        if(mixerHdr) mixerHdr.innerText = "PRO MIXER & EDITOR";
         initProTrackList();
     } else {
-        btn.innerText = "MODE: STANDARD";
-        btn.style.background = "#ff4081"; // Pink for Standard
-        btn.style.color = "#fff";
         proPanel.style.display = 'none';
         mixerStd.style.display = 'grid';
-        mixerHdr.innerText = "REALTIME MIXER & EDITOR";
-        // Reset Editor
+        if(mixerHdr) mixerHdr.innerText = "REALTIME MIXER & EDITOR";
         gEditingTrack = -1;
         initTrimmer(); 
     }
+    
+    // UI状態（1bitかPWMか）を再評価して表示を更新
+    toggleEngineUI();
 }
 
 // ==========================================
@@ -750,6 +861,8 @@ window.onload = () => {
     updateSliderFill(document.getElementById('volBass'), '#00e5ff');
     updateSliderFill(document.getElementById('volAcc'), '#ffd740');
     updateSliderFill(document.getElementById('speedRange'), '#ffd700');
+    
+    toggleEngineUI(); // Init State
 };
 
 document.getElementById('midiInput').addEventListener('change', async (e) => {
@@ -760,7 +873,11 @@ document.getElementById('midiInput').addEventListener('change', async (e) => {
 });
 
 function updateLiveVoices(triggerRole) {
-    if(triggerRole && triggerRole !== 'Limit' && gMode==='Standard') {
+    const mcu = document.getElementById('mcuSelect').value;
+    const engine = document.getElementById('engineSelect').value;
+    const is1Bit = (mcu === 'R3') || (mcu === 'R4' && engine === '1BIT');
+
+    if(triggerRole && triggerRole !== 'Limit' && gMode==='Standard' && !is1Bit) {
         const val = document.getElementById('vol' + triggerRole).value;
         document.getElementById('disp' + triggerRole).innerText = val + "%";
     }
@@ -802,6 +919,11 @@ function initProTrackList() {
     const container = document.getElementById('proTrackList');
     container.innerHTML = "";
     
+    // 1-bit判定
+    const mcu = document.getElementById('mcuSelect').value;
+    const eng = document.getElementById('engineSelect').value;
+    const is1Bit = (mcu === 'R3') || (mcu === 'R4' && eng.value === '1BIT');
+    
     // Initialize if empty
     if(gProSettings.length !== gMidi.tracks.length) {
         gProSettings = gMidi.tracks.map((t, i) => {
@@ -825,11 +947,14 @@ function initProTrackList() {
         div.className = `pro-track-row ${s.mute ? 'muted' : ''}`;
         if(gEditingTrack === i) div.classList.add('editing');
         
+        // 1-bit時はボリュームスライダーを表示しない
+        const volDisplay = is1Bit ? 'visibility:hidden;' : '';
+
         div.innerHTML = `
             <span style="color:#aaa;">#${i+1}</span>
             <div style="overflow:hidden; white-space:nowrap; text-overflow:ellipsis;" title="${s.name}">${s.name}</div>
             
-            <input type="range" min="0" max="200" value="${s.vol}" style="height:4px;" 
+            <input type="range" min="0" max="200" value="${s.vol}" style="height:4px; ${volDisplay}" 
                 oninput="gProSettings[${i}].vol=this.value; updateLiveVoices();">
             
             <select class="prio-select" onchange="gProSettings[${i}].oct=parseInt(this.value); updateLiveVoices();">
@@ -1019,6 +1144,9 @@ function resetMixerSettings() {
         el.value = defV;
         updateSliderFill(el, color);
         document.getElementById('disp'+role).innerText = defV + "%";
+        // Reset Switch
+        const sw = document.getElementById('sw'+role);
+        if(sw) sw.checked = true;
     });
     document.getElementById('octMelody').value = "12";
     document.getElementById('octBass').value = "-12";
@@ -1043,6 +1171,7 @@ function resetMixerSettings() {
     vc.value = 8;
     updateSliderFill(vc, '#ffd700');
     updateVoiceLimit();
+    toggleEngineUI();
 }
 
 
@@ -1078,12 +1207,15 @@ function getFrequency(midiNote, modeName) {
 
 function applyLiveParams() {
     const mcu = document.getElementById('mcuSelect').value;
+    const engine = document.getElementById('engineSelect').value;
     const tuningMode = document.getElementById('tuningSelect').value;
     const ctxTime = audioCtx.currentTime;
+    const is1Bit = (mcu === 'R3') || (mcu === 'R4' && engine === '1BIT');
 
     activeVoices.forEach(voice => {
         let vol = 1.0;
         let pOffset = 0;
+        let isMuted = false;
 
         if(gMode === 'Standard') {
             const mix = {
@@ -1092,16 +1224,24 @@ function applyLiveParams() {
                 acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
             };
             const s = mix[voice.role];
-            vol = s.v;
+            
+            if (is1Bit) {
+                // スイッチ状態を確認
+                const sw = document.getElementById('sw' + voice.role.charAt(0).toUpperCase() + voice.role.slice(1));
+                if (sw && !sw.checked) isMuted = true;
+                vol = 1.0;
+            } else {
+                vol = s.v;
+            }
             pOffset = s.p;
         } else {
             const s = gProSettings[voice.trackIdx];
-            if(s.mute) vol = 0;
-            else vol = s.vol / 100;
+            if(s.mute) isMuted = true;
+            else vol = is1Bit ? 1.0 : s.vol / 100;
             pOffset = s.oct;
         }
 
-        if(vol <= 0) {
+        if(isMuted || vol <= 0) {
             voice.gain.gain.setTargetAtTime(0, ctxTime, 0.05);
             return;
         }
@@ -1109,8 +1249,8 @@ function applyLiveParams() {
         const targetPitch = voice.baseMidi + pOffset;
         let freq = getFrequency(targetPitch, tuningMode);
         
-        // Auto Target Logic (Applies to both modes)
-        if(mcu === 'R4' && voice.role === 'bass') {
+        // Auto Target Logic
+        if(!is1Bit && mcu === 'R4' && voice.role === 'bass') {
             voice.osc.type = 'sawtooth';
         } else {
             voice.osc.type = 'square';
@@ -1121,6 +1261,7 @@ function applyLiveParams() {
         // Preview Volume
         let targetVol = voice.baseVel * vol * 0.05; 
         if(voice.role === 'acc') targetVol *= 0.6;
+        if(is1Bit) targetVol = 0.1; // Fixed low volume for previewing 1-bit
         targetVol = Math.min(0.26, targetVol); 
         voice.gain.gain.setTargetAtTime(targetVol, ctxTime, 0.05);
     });
@@ -1204,6 +1345,12 @@ function playNote(ev, time) {
     let vol = 1.0;
     let pOffset = 0;
     let priority = 1; // 0:Low, 1:Mid, 2:High
+    let isMuted = false;
+    
+    // Check Engine Mode
+    const mcu = document.getElementById('mcuSelect').value;
+    const engine = document.getElementById('engineSelect').value;
+    const is1Bit = (mcu === 'R3') || (mcu === 'R4' && engine === '1BIT');
 
     if(gMode === 'Standard') {
         const mix = {
@@ -1212,7 +1359,15 @@ function playNote(ev, time) {
             acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
         };
         const s = mix[ev.role];
-        vol = s.v;
+        
+        if (is1Bit) {
+            // スイッチ状態を確認
+            const sw = document.getElementById('sw' + ev.role.charAt(0).toUpperCase() + ev.role.slice(1));
+            if (sw && !sw.checked) isMuted = true;
+            vol = 1.0;
+        } else {
+            vol = s.v;
+        }
         pOffset = s.p;
         // Standardの優先度: Melody > Bass > Acc
         if(ev.role === 'melody') priority = 2;
@@ -1221,8 +1376,8 @@ function playNote(ev, time) {
     } else {
         // PRO Mode
         const s = gProSettings[ev.trackIdx];
-        if(s.mute) return;
-        vol = s.vol / 100;
+        if(s.mute) isMuted = true;
+        vol = is1Bit ? 1.0 : s.vol / 100;
         pOffset = s.oct;
         
         if(s.prio === 'High') priority = 2;
@@ -1230,7 +1385,8 @@ function playNote(ev, time) {
         else priority = 1; // Mid
     }
 
-    if(vol <= 0) return; // 音量0ならリソースを使わない
+    if(isMuted) return; // ミュート時は発音しない
+    if(!is1Bit && vol <= 0) return; 
 
     // 2. ボイス割り当て (階層型スチールロジック)
     const maxVoices = parseInt(document.getElementById('voiceCount').value);
@@ -1258,8 +1414,7 @@ function playNote(ev, time) {
         }
     }
 
-    // 3. 発音処理 (以下変更なし)
-    const mcu = document.getElementById('mcuSelect').value;
+    // 3. 発音処理
     const tuningMode = document.getElementById('tuningSelect').value;
     
     const osc = audioCtx.createOscillator();
@@ -1268,10 +1423,12 @@ function playNote(ev, time) {
     const pitch = ev.p + pOffset;
     osc.frequency.value = getFrequency(pitch, tuningMode);
     
-    osc.type = (mcu === 'R4' && ev.role === 'bass') ? 'sawtooth' : 'square';
+    osc.type = (!is1Bit && mcu === 'R4' && ev.role === 'bass') ? 'sawtooth' : 'square';
     
     let finalVol = ev.v * vol * 0.05; 
     if(ev.role === 'acc') finalVol *= 0.6;
+    if(is1Bit) finalVol = 0.1; // Fixed preview vol for 1-bit
+
     gain.gain.value = Math.min(0.26, finalVol);
 
     osc.connect(gain);
@@ -1290,7 +1447,7 @@ function playNote(ev, time) {
 }
 
 // ==========================================
-// 6. Code Generation & Export
+// 6. Code Generation & Export (Optimized)
 // ==========================================
 function getCookedEvents() {
     const tuningMode = document.getElementById('tuningSelect').value;
@@ -1299,13 +1456,19 @@ function getCookedEvents() {
     // Check global fixed max
     const fixedMax = (gMode === 'Pro' && document.getElementById('chkFixedMax').checked);
     
+    // Check Engine Mode for Mute Logic
+    const mcu = document.getElementById('mcuSelect').value;
+    const eng = document.getElementById('engineSelect').value;
+    const is1Bit = (mcu === 'R3') || (mcu === 'R4' && eng.value === '1BIT');
+
     let cookedEvents = [];
     let idCount = 0;
     
     gMidi.tracks.forEach((t, i) => {
         // Determine Track Settings
         let vol, oct, prio;
-        let role = gTrackRoles[i]; // for default priority/role assignment
+        let role = gTrackRoles[i]; 
+        let isMuted = false;
 
         if(gMode === 'Standard') {
             const mix = {
@@ -1314,34 +1477,34 @@ function getCookedEvents() {
                 acc:    { v: parseInt(document.getElementById('volAcc').value)/100,    p: parseInt(document.getElementById('octAcc').value) }
             };
             const s = mix[role];
-            vol = s.v;
+            
+            if (is1Bit) {
+                // スイッチ状態を確認 (Standard Mode 1-bit)
+                const sw = document.getElementById('sw' + role.charAt(0).toUpperCase() + role.slice(1));
+                if (sw && !sw.checked) isMuted = true;
+                vol = 1.0;
+            } else {
+                vol = s.v;
+            }
             oct = s.p;
-            // Standard Priorities
             prio = (role==='melody')?2:(role==='bass'?1:0);
         } else {
+            // Pro Mode
             const s = gProSettings[i];
-            if(s.mute) return; // Skip entire track
+            if(s.mute) isMuted = true;
             vol = s.vol / 100;
             oct = s.oct;
             prio = (s.prio==='High')?2:(s.prio==='Low'?0:1);
         }
 
-        if(vol <= 0) return; // Skip silent tracks (Resource Optimization)
+        // --- メモリ節約ロジック ---
+        // ミュートされている、または(PWMモードで)音量が0以下の場合はデータを生成しない
+        if (isMuted || (!is1Bit && vol <= 0)) return;
 
         t.notes.forEach(n => {
             if(n.time < gRangeStart || n.time > gRangeEnd) return;
             if(n.duration < 0.01) return;
             
-            // Check if note was edited (muted) in Canvas?
-            // Since we didn't update gMidi.tracks.notes directly (we updated gRawEvents), 
-            // we should technically verify. But modifying gRawEvents is for Preview.
-            // For generation, let's rely on global track settings OR sync raw events back.
-            // Simplified: If you edit on canvas, it only affects preview in this version, 
-            // unless we do complex mapping.
-            // **Correction**: Let's skip note editing for C++ gen in this version 
-            // to keep it robust, or do a simple lookup if needed.
-            // *Better approach for V8*: Apply volume scaler.
-
             const shiftedStart = (n.time - gRangeStart) / gSpeed;
             const shiftedDur = n.duration / gSpeed;
             
@@ -1355,7 +1518,7 @@ function getCookedEvents() {
 
             let v = 0;
             if(fixedMax) {
-                v = 255; // Signal to use Max Duty
+                v = 255; 
             } else {
                 let rawV = n.velocity * 127 * vol; 
                 v = Math.round(rawV);
@@ -1385,6 +1548,9 @@ function generateReportAndCode(onlyTextUpdate = false) {
     // Simulate with priority logic
     const result = simulateAllocation(cookedEvents, vCount);
     const pins = PIN_MAP[mcu].slice(0, vCount);
+    // Correct pin display for R3 A0
+    if(mcu === 'R3' && vCount >= 12) pins[11] = "A0";
+
     const lang = LANG[currentLang];
     
     const dropRate = ((result.dropped / (cookedEvents.length/2)) * 100).toFixed(1);
@@ -1452,7 +1618,7 @@ function exportModifiedMidi() {
     const blob = new Blob([finalBytes], {type: "audio/midi"});
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `V8_Export_${gFilename}.mid`;
+    link.download = `V9_Export_${gFilename}.mid`;
     link.click();
 }
 
@@ -1547,31 +1713,279 @@ function simulateAllocation(events, maxV) {
 }
 
 // ==========================================
-// 6. C++ Generator
+// 7. Binary Stream Encoder & Code Generator (V9.0)
 // ==========================================
+function encodeBinaryStream(events) {
+    let bytes = [];
+    let lastT = 0;
+
+    events.forEach(e => {
+        let dt = e.t - lastT;
+        lastT = e.t;
+
+        // Delayのエンコード (127msを超える場合は複数回に分ける)
+        while(dt > 0) {
+            let wait = Math.min(127, dt);
+            bytes.push(wait);
+            dt -= wait;
+        }
+
+        // コマンドのエンコード
+        // R3/1-bitはベロシティ無視なので [Cmd+Ch] [Note] の2バイトだけ
+        if(e.type === 1) { // Note ON
+            bytes.push(0x90 | (e.ch & 0x0F));
+            bytes.push(e.p);
+        } else { // Note OFF
+            bytes.push(0x80 | (e.ch & 0x0F));
+            bytes.push(e.p);
+        }
+    });
+    bytes.push(0xF0); // End
+    return bytes;
+}
+
 function generateSketch(mcu, events, vCount, tuningMode) {
-    const pins = PIN_MAP[mcu].slice(0, vCount).join(", ");
-    const dataStr = events.map(e => `{${e.t},${e.type},${e.ch},${e.p},${Math.min(255, e.v)}}`).join(",");
-    
     const d = new Date();
     const dateStr = d.getFullYear() + "-" + (d.getMonth()+1).toString().padStart(2,'0') + "-" + d.getDate().toString().padStart(2,'0');
-    const headerInfo = `
- * Generated: ${dateStr}
- * Source: ${gFilename}
- * Settings: Speed x${gSpeed.toFixed(1)}, Range ${formatTime(gRangeStart)}-${formatTime(gRangeEnd)}
- * System: ${tuningMode} (${vCount} Voices)
- `;
+    const headerInfo = `/* Generated: ${dateStr} | Source: ${gFilename} */`;
+    
+    // R4のエンジン判定
+    const r4Engine = document.getElementById('engineSelect').value;
 
-    let r4T=[]; 
-    let espT=[]; 
+    // ---------------------------------------------------------
+    // R3 (ATmega328P) & R4 1-bit Mode Logic
+    // ---------------------------------------------------------
+    if (mcu === "R3" || (mcu === "R4" && r4Engine === "1BIT")) {
+        const isR3 = (mcu === "R3");
+        
+        // 周波数テーブル生成 (16bit Step)
+        // R3: 15kHz, R4: 24kHz (少し高音質化)
+        const SAMPLE_RATE = isR3 ? 15000 : 24000;
+        let freqTable = [];
+        for(let i=0; i<128; i++){
+            const f = getFrequency(i, tuningMode);
+            let step = Math.round((f * 65536.0) / SAMPLE_RATE);
+            if(step > 65535) step = 65535;
+            freqTable.push(step);
+        }
+
+        // バイナリストリーム生成
+        const binData = encodeBinaryStream(events);
+        const hexData = binData.map(b => "0x" + b.toString(16).toUpperCase().padStart(2,'0')).join(",");
+
+        // ピン定義 (R3は A0 を使うように修正)
+        let pinDef = "";
+        if(isR3) {
+            // R3 Pin Mapping logic (Port manipulation requires fixed pins)
+            pinDef = "// Pins: 2,3,4,5,6,7,8,9,10,11,12,A0";
+        } else {
+            const p = PIN_MAP["R4"].slice(0, vCount).join(",");
+            pinDef = `const int pins[] = {${p}};`;
+        }
+
+        // -----------------------------------------------------
+        // R3 Code Template (Memory Optimized)
+        // -----------------------------------------------------
+        if(isR3) {
+            return `${headerInfo}
+/* Target: Arduino UNO R3 (ATmega328P)
+ * Engine: 12-Voice 1-bit DDS (Memory Optimized Binary Stream)
+ * Pins: 2-12, A0 (Total 12)
+ */
+#include <Arduino.h>
+#include <avr/pgmspace.h>
+#include <avr/interrupt.h>
+
+const uint16_t STEPS[] PROGMEM = {${freqTable.join(",")}};
+const uint8_t SCORE[] PROGMEM = {${hexData}};
+
+volatile uint16_t acc[12];
+volatile uint16_t inc[12];
+volatile uint8_t  on[12];
+
+// 15kHz Interrupt
+ISR(TIMER1_COMPA_vect) {
+  // Voice 0-5 (Port D 2-7)
+  acc[0]+=inc[0]; if(on[0]&&(acc[0]<inc[0])) PIND=0x04; // Pin 2
+  acc[1]+=inc[1]; if(on[1]&&(acc[1]<inc[1])) PIND=0x08;
+  acc[2]+=inc[2]; if(on[2]&&(acc[2]<inc[2])) PIND=0x10;
+  acc[3]+=inc[3]; if(on[3]&&(acc[3]<inc[3])) PIND=0x20;
+  acc[4]+=inc[4]; if(on[4]&&(acc[4]<inc[4])) PIND=0x40;
+  acc[5]+=inc[5]; if(on[5]&&(acc[5]<inc[5])) PIND=0x80; // Pin 7
+  
+  // Voice 6-10 (Port B 0-4 -> Pins 8-12)
+  acc[6]+=inc[6]; if(on[6]&&(acc[6]<inc[6])) PINB=0x01; // Pin 8
+  acc[7]+=inc[7]; if(on[7]&&(acc[7]<inc[7])) PINB=0x02;
+  acc[8]+=inc[8]; if(on[8]&&(acc[8]<inc[8])) PINB=0x04;
+  acc[9]+=inc[9]; if(on[9]&&(acc[9]<inc[9])) PINB=0x08;
+  acc[10]+=inc[10]; if(on[10]&&(acc[10]<inc[10])) PINB=0x10; // Pin 12
+
+  // Voice 11 (Port C 0 -> Pin A0)
+  acc[11]+=inc[11]; if(on[11]&&(acc[11]<inc[11])) PINC=0x01; // Pin A0 (14)
+}
+
+void setup() {
+  DDRD |= 0xFC; // 2-7
+  DDRB |= 0x1F; // 8-12
+  DDRC |= 0x01; // A0
+  
+  // Timer1 15kHz
+  cli();
+  TCCR1A = 0; TCCR1B = 0; TCNT1 = 0;
+  OCR1A = 1066; // 16MHz/15000
+  TCCR1B |= (1 << WGM12) | (1 << CS10);
+  TIMSK1 |= (1 << OCIE1A);
+  sei();
+}
+
+void loop() {
+  static uint32_t csr = 0;
+  static uint32_t nextT = 0;
+  
+  if(millis() < nextT) return;
+
+  while(true) {
+    uint8_t b = pgm_read_byte(&SCORE[csr++]);
+    
+    if(b == 0xF0) { // End
+       for(int i=0;i<12;i++) on[i]=0; // 全音オフ
+       delay(1000);      // 1秒待機
+       csr = 0;          // 読み込み位置を最初に戻す
+       nextT = millis(); // タイマー基準をリセット
+       return;           // loop()の先頭に戻る
+    }
+    
+    if(b < 128) { // Delay
+       if(b > 0) {
+         nextT = millis() + b;
+         return; // Wait until nextT
+       }
+    } else { // Command
+       uint8_t ch = b & 0x0F;
+       bool isNoteOn = (b & 0xF0) == 0x90;
+       uint8_t note = pgm_read_byte(&SCORE[csr++]);
+       
+       if(ch < 12) {
+         if(isNoteOn) {
+           inc[ch] = pgm_read_word(&STEPS[note]);
+           on[ch] = 1;
+         } else {
+           on[ch] = 0;
+         }
+       }
+    }
+  }
+}`;
+        } else {
+            // -----------------------------------------------------
+            // R4 1-bit Mode Code (High Performance / Register Direct)
+            // -----------------------------------------------------
+            return `${headerInfo}
+/* Target: Arduino UNO R4
+ * Engine: ${vCount}-Voice 1-bit DDS (High Performance Register Access)
+ */
+#include <Arduino.h>
+#include "FspTimer.h"
+
+${pinDef}
+const uint32_t STEPS[] = {${freqTable.join(",")}};
+const uint8_t SCORE[] = {${hexData}};
+
+FspTimer timer;
+volatile uint16_t acc[${vCount}];
+volatile uint16_t inc[${vCount}];
+volatile uint8_t  on[${vCount}];
+
+// 高速化のための構造体
+struct PinPtr {
+    volatile uint16_t* portReg; // ポート出力レジスタへのポインタ
+    uint16_t mask;              // ピンに対応するビットマスク
+};
+PinPtr pp[${vCount}];
+
+void isr(timer_callback_args_t *args) {
+    for(int i=0; i<${vCount}; i++) {
+        if(on[i]) {
+            acc[i] += inc[i];
+            if(acc[i] < inc[i]) {
+                // digitalWriteの代わりにレジスタを直接XOR反転（爆速）
+                *pp[i].portReg ^= pp[i].mask;
+            }
+        }
+    }
+}
+
+void setup() {
+    for(int i=0; i<${vCount}; i++) {
+        pinMode(pins[i], OUTPUT);
+        // R4のレジスタアドレスを計算してキャッシュする
+        bsp_io_port_pin_t p = (bsp_io_port_pin_t)g_pin_cfg[pins[i]].pin;
+        // PODR (Port Output Data Register) のアドレスを取得
+        pp[i].portReg = (volatile uint16_t*)&((R_PORT0_Type*)((uint32_t)R_PORT0 + ((p >> 8) * 0x20)))->PODR;
+        pp[i].mask = 1 << (p & 0xFF);
+    }
+    
+    uint8_t type;
+    int8_t ch = FspTimer::get_available_timer(type);
+    timer.begin(TIMER_MODE_PERIODIC, type, ch, ${SAMPLE_RATE}, 0.0f, isr);
+    timer.setup_overflow_irq();
+    timer.open();
+    timer.start();
+}
+
+void loop() {
+  static uint32_t csr = 0;
+  static uint32_t nextT = 0;
+  
+  if(millis() < nextT) return;
+
+  while(true) {
+    uint8_t b = SCORE[csr++];
+    
+    if(b == 0xF0) { 
+        // 終了時の処理（ループ再生対応済み）
+        for(int i=0;i<${vCount};i++) on[i]=0; 
+        delay(1000);
+        csr = 0;
+        nextT = millis();
+        return; 
+    }
+    
+    if(b < 128) {
+       if(b > 0) { nextT = millis() + b; return; }
+    } else {
+       uint8_t ch = b & 0x0F;
+       bool isNoteOn = (b & 0xF0) == 0x90;
+       uint8_t note = SCORE[csr++];
+       
+       if(ch < ${vCount}) {
+         if(isNoteOn) {
+           inc[ch] = STEPS[note];
+           on[ch] = 1;
+         } else {
+           on[ch] = 0;
+         }
+       }
+    }
+  }
+}`;
+        }
+    }
+
+    // ---------------------------------------------------------
+    // R4 (PWM) & ESP32 (Legacy Standard)
+    // ---------------------------------------------------------
+    const pins = PIN_MAP[mcu] ? PIN_MAP[mcu].slice(0, vCount).join(", ") : "";
+    const dataStr = events.map(e => `{${e.t},${e.type},${e.ch},${e.p},${Math.min(255, e.v)}}`).join(",");
+    let r4T=[]; let espT=[]; 
     for(let i=0;i<128;i++) {
         const freq = getFrequency(i, tuningMode);
         r4T.push(Math.round(freq * 4294967296.0 / 20000) + "UL");
         espT.push(Math.round(freq));
     }
 
-    if(mcu === "R4") {
-        return `/* MIDI PRO V8.0 Global Heritage (${tuningMode}) for R4 ${headerInfo}*/
+    if(mcu === "R4") { // R4 PWM Mode
+        return `${headerInfo} /* R4 PWM Mode */
 #include <Arduino.h>
 #include "FspTimer.h"
 constexpr uint32_t SR=20000;
@@ -1623,15 +2037,17 @@ void loop(){
     v[c].bs=STEP[sc[i].p];v[c].cs=v[c].bs;v[c].l=0;v[c].b=(sc[i].p<55);
     int td=(sc[i].p<55)?120:(sc[i].p>85?40:64);
     int d=map(sc[i].v,0,127,2,td);
-    if(sc[i].v > 130) d = td; // Fixed Max Vol Logic
+    if(sc[i].v > 130) d = td;
     v[c].td=td;v[c].cd=d;v[c].a=1;
    }
   }else{if(sc[i].c<NV)v[sc[i].c].a=0;}
   i++;
  }
 }`;
-    } else {
-        return `/* MIDI PRO V8.0 (${tuningMode}) for ESP32 ${headerInfo}*/
+    }
+
+    // ESP32 Code
+    return `/* MIDI PRO V9.0 (${tuningMode}) for ESP32 ${headerInfo}*/
 #include <Arduino.h>
 constexpr uint8_t NV=${vCount};
 const int pins[]={${pins}};
@@ -1672,7 +2088,7 @@ void loop(){
     int maxD = 128; 
     int d = 0;
     if(sc[i].v > 127) {
-        d = 128; // Max Power
+        d = 128;
     } else {
         int md=(p<55)?128:(p>85?40:64);
         d=map(sc[i].v,1,127,1,md);
@@ -1696,10 +2112,8 @@ void loop(){
   i++;
  }
 }`;
-    }
 }
 updateLanguageUI();
 </script>
 </body>
 </html>
-
