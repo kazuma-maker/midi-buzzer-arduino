@@ -69,3 +69,74 @@ graph TD;
     B_etc -.-> GND
     
     GND[GND Common]
+
+
+
+    Follow these steps to generate your Arduino sketch.
+(以下の手順に従って、Arduino用スケッチを生成してください。)
+
+How to Use
+----------
+1. Load MIDI File
+Click the button to upload your .mid file.
+(ボタンをクリックして、MIDIファイルをアップロードします。)
+
+![Step 1 Load MIDI](./images/1.jpg)
+
+
+2. Select Target Board and Engine
+Choose your microcontroller (Arduino UNO R4, R3, or ESP32) and the sound engine.
+(使用するマイコンボードとサウンドエンジンを選択します。)
+
+![Step 2 Select Target](./images/2.jpg)
+
+
+3. Set Voice Count
+Adjust the slider to match the number of passive buzzers connected to your board.
+(ボードに接続されているパッシブブザーの数に合わせてスライダーを調整します。)
+
+![Step 3 Set Pins](./images/3.jpg)
+
+
+4. Select Tuning System (Optional)
+You can change the tuning system from standard 12-TET to various scales like Pythagorean or Gamelan.
+(標準の平均律だけでなく、ピタゴラス音律やガムランなど、様々な音律に変更できます。)
+
+![Step 4 Select Tuning](./images/4.jpg)
+
+
+5. Edit and Mix
+Use the mixer to adjust volume balance, change octaves, or trim the playback range.
+(ミキサーを使って音量バランスやオクターブを変更したり、再生範囲をトリミングしたりできます。)
+
+![Step 5 Mixer](./images/5.jpg)
+
+
+Tip: Switch to PRO MODE
+Click the PRO MODE button for advanced track-by-track editing and priority settings.
+(PRO MODEボタンを押すと、トラックごとの詳細な編集や優先度設定が可能です。)
+
+![Step 5-B Pro Mode](./images/8.jpg)
+
+
+6. Generate Sketch
+Click the GENERATE SKETCH button to create the C++ code.
+(ボタンをクリックして、C++コードを生成します。)
+
+![Step 6 Generate](./images/6.jpg)
+
+
+7. Upload to Arduino
+Copy the generated code, paste it into the Arduino IDE, and click the Upload button.
+(生成されたコードをコピーしてArduino IDEに貼り付け、書き込みボタンを押してください。)
+
+![Step 7 Upload](./images/7.jpg)
+
+
+License
+MIT License
+
+
+
+
+
