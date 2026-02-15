@@ -87,10 +87,7 @@ graph TD;
     
     GND[GND (Common)]
 
-
-
-
-Follow these steps to generate your Arduino sketch.
+    Follow these steps to generate your Arduino sketch.
 (以下の手順に従って、Arduino用スケッチを生成してください。)
 
 How to Use
