@@ -1713,7 +1713,7 @@ function simulateAllocation(events, maxV) {
 }
 
 // ==========================================
-// 7. Binary Stream Encoder & Code Generator (V9.0)
+// 7. Binary Stream Encoder & Code Generator (V9.1)
 // ==========================================
 function encodeBinaryStream(events) {
     let bytes = [];
@@ -2047,7 +2047,7 @@ void loop(){
     }
 
     // ESP32 Code
-    return `/* MIDI PRO V9.0 (${tuningMode}) for ESP32 ${headerInfo}*/
+    return `/* MIDI PRO V9.1 (${tuningMode}) for ESP32 ${headerInfo}
 #include <Arduino.h>
 constexpr uint8_t NV=${vCount};
 const int pins[]={${pins}};
@@ -2117,3 +2117,4 @@ updateLanguageUI();
 </script>
 </body>
 </html>
+
