@@ -1,10 +1,22 @@
 MIDI ArduinoIDE PRO
 ===================
+Simply copy and paste your MIDI data into the Arduino IDE to instantly generate a playable program. It supports everything from single notes to polyphonic performances utilizing up to 28 buzzers.
+(お手持ちのMIDIデータを、Arduino IDEにコピー＆ペーストするだけで即座に演奏可能なプログラムを出力します。単音から、最大28個のブザーを駆使した多音演奏まで幅広く対応しています。)
 
 Turn your Arduino into a Polyphonic Synthesizer with just Passive Buzzers.
 (パッシブブザーだけで、Arduinoを多重和音シンセサイザーに変身させるWebツールです。)
 
-[Open Application (Latest V9.1)](https://kazuma-maker.github.io/midi-buzzer-arduino/?v=9.3)
+対応マイコンは以下になります。
+
+【Arduino UNO R4】を選択した場合 : Arduino UNO R4 Minima , Arduino UNO R4 WiFi
+【Arduino UNO R3】を選択した場合 : Arduino UNO R3（互換機含む） , Arduino Nano (V3.0 / ATmega328P版) , Arduino Pro Mini (5V / 16MHz版) , Arduino Mini
+【ESP32】を選択した場合 : ESP32-WROOM-32 , ESP32-S3 , ESP32-C3 , M5Stack シリーズ , M5Atom / M5StickC , Seeed XIAO ESP32C3 / S3
+【Raspberry Pi Pico / Pico 2】を選択した場合 : Raspberry Pi Pico / Pico W , Raspberry Pi Pico 2 , RP2040-Zero , Seeed XIAO RP2040 , Adafruit Feather RP2040 , Pro Micro RP2040 , SparkFun Pro Micro - RP2040
+※マイコンによってはピン設定を編集する必要があります。
+
+
+
+[Open Application (Latest V9.3)](https://kazuma-maker.github.io/midi-buzzer-arduino/?v=9.3)
 
 
 Demo Video
@@ -131,5 +143,6 @@ Copy the generated code, paste it into the Arduino IDE, and click the Upload but
 
 License
 MIT License
+
 
 
